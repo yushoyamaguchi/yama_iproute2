@@ -2111,6 +2111,48 @@ static int ip_addr_list(struct nlmsg_chain *ainfo)
 	return 0;
 }
 
+#define BUFFER_SIZE 8192
+
+void parse_rtattr2(struct rtattr *tb[], int max, struct rtattr *rta, int len) {
+    memset(tb, 0, sizeof(struct rtattr *) * (max + 1));
+    while (RTA_OK(rta, len)) {
+        if (rta->rta_type <= max) {
+            tb[rta->rta_type] = rta;
+        }
+        rta = RTA_NEXT(rta, len);
+    }
+}
+
+void display_link_info(struct nlmsghdr *nlh) {
+    struct ifinfomsg *ifinfo;
+    struct rtattr *tb[IFLA_MAX + 1];
+    int len;
+
+    ifinfo = NLMSG_DATA(nlh);
+    len = nlh->nlmsg_len - NLMSG_LENGTH(sizeof(*ifinfo));
+    parse_rtattr2(tb, IFLA_MAX, IFLA_RTA(ifinfo), len);
+
+    printf("Index: %d\n", ifinfo->ifi_index);
+    printf("Type: %d\n", ifinfo->ifi_type);
+    printf("Flags: %08x\n", ifinfo->ifi_flags);
+    printf("Change: %08x\n", ifinfo->ifi_change);
+
+    if (tb[IFLA_IFNAME]) {
+        printf("Name: %s\n", (char *)RTA_DATA(tb[IFLA_IFNAME]));
+    }
+
+    if (tb[IFLA_MTU]) {
+        printf("MTU: %d\n", *(int *)RTA_DATA(tb[IFLA_MTU]));
+    }
+
+    if (tb[IFLA_ADDRESS]) {
+        unsigned char *addr = RTA_DATA(tb[IFLA_ADDRESS]);
+        printf("MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n",
+               addr[0], addr[1], addr[2], addr[3], addr[4], addr[5]);
+    }
+}
+
+
 static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 {
 	struct nlmsg_chain linfo = { NULL, NULL};
@@ -2282,6 +2324,7 @@ static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 		int res = 0;
 
 		open_json_object(NULL);
+		display_link_info(n);
 		if (brief || !no_link)
 			res = print_linkinfo(n, stdout);
 		if (res >= 0 && filter.family != AF_PACKET)
