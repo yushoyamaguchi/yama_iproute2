@@ -2141,6 +2141,10 @@ void display_link_info(struct nlmsghdr *nlh) {
         printf("Name: %s\n", (char *)RTA_DATA(tb[IFLA_IFNAME]));
     }
 
+	if (tb[IFLA_OPERSTATE]) {
+        printf("operstate: %d\n", *(int *)RTA_DATA(tb[IFLA_OPERSTATE]));
+    }
+
     if (tb[IFLA_MTU]) {
         printf("MTU: %d\n", *(int *)RTA_DATA(tb[IFLA_MTU]));
     }
