@@ -2156,7 +2156,6 @@ void display_link_info(struct nlmsghdr *nlh) {
     }
 }
 
-
 static int ipaddr_list_flush_or_save(int argc, char **argv, int action)
 {
 	struct nlmsg_chain linfo = { NULL, NULL};
